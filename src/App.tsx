@@ -5,7 +5,9 @@ export function App() {
   return (
     <ThemeProvider storageKey="Pokedex-theme" defaultTheme="dark">
       {/* <ActivePageProvider> */}
-      <SearchPokemon />
+      <div>
+        <SearchPokemon />
+      </div>
       {/* </ActivePageProvider> */}
     </ThemeProvider>
   );

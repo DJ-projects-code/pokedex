@@ -1,3 +1,5 @@
+import { getPokemonList } from "@/api/get-pokemon-list";
+import { getPokemonDetails } from "@/api/get-pokemon-details";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -11,16 +13,31 @@ import {
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Table } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+
+
+interface PokemonListItem {
+  name: string;
+  sprites: {
+    front_default: string;
+  };
+}
+
 
 const searchPokemonSchema = z.object({
   nameOrId: z.string().min(1, "Nome ou ID do Pokémon é obrigatório"),
 });
 
+
 type SearchPokemonType = z.infer<typeof searchPokemonSchema>;
 
 export function SearchPokemon() {
+  const [pokemonList, setPokemonList] = useState<PokemonListItem[]>([]);
+  const [searchedPokemon, setSearchedPokemon] = useState<PokemonListItem | null>(null);
+
+
   const searchPokemonForm = useForm<SearchPokemonType>({
     resolver: zodResolver(searchPokemonSchema),
     defaultValues: {
@@ -28,9 +45,31 @@ export function SearchPokemon() {
     },
   });
 
-  const onSubmit = (data: SearchPokemonType) => {
-    console.log("Searching for Pokémon:", data);
+  const onSubmit = async (data: SearchPokemonType) => {
+    try {
+      const result = await getPokemonDetails(data.nameOrId.toLowerCase());
+      setSearchedPokemon(result);
+      setPokemonList([]); // limpa a lista de todos
+    } catch (err) {
+      console.error("Erro ao buscar Pokémon:", err);
+      setSearchedPokemon(null);
+    }
     searchPokemonForm.reset();
+  };
+
+
+  // Buscar os 20 primeiros
+  const handleViewAllPokemon = async () => {
+    try {
+      const list = await getPokemonList();
+      const detailedList = await Promise.all(
+        list.results.map(async (pokemon) => await getPokemonDetails(pokemon.name))
+      );
+      setPokemonList(detailedList);
+      setSearchedPokemon(null);
+    } catch (err) {
+      console.error("Erro ao buscar lista de Pokémon:", err);
+    }
   };
 
   return (
@@ -73,10 +112,39 @@ export function SearchPokemon() {
       </Form>
 
       <div className="grid grid-cols-2 mt-4">
-        <Button className="w-full h-16 cursor-pointer" variant="default">
+        <Button className="w-full h-16 cursor-pointer" variant="default" onClick={handleViewAllPokemon}>
           <Table />
           Pokedex
         </Button>
+      </div>
+
+      {/* Resultado da busca por nome ou ID */}
+      {searchedPokemon && (
+        <div className="flex flex-col items-center border p-4 rounded-xl shadow-md mb-4">
+          <h3 className="text-2xl capitalize">{searchedPokemon.name}</h3>
+          <img
+            src={searchedPokemon.sprites.front_default}
+            alt={`Imagem de ${searchedPokemon.name}`}
+            className="w-[200px] h-[200px] rounded-full mt-2"
+          />
+        </div>
+      )}
+
+      {/* Lista dos Pokemons */}
+      <div className=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {pokemonList.map((pokemon) => (
+          <div
+            key={pokemon.name}
+            className="flex flex-col items-center border p-4 rounded-xl shadow-md"
+          >
+            <h3 className="text-xl capitalize mb-2">{pokemon.name}</h3>
+            <img
+              src={pokemon.sprites.front_default}
+              alt={`Imagem de ${pokemon.name}`}
+              className="w-[150px] h-[150px] rounded-full"
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
