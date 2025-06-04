@@ -73,7 +73,7 @@ export function SearchPokemon() {
   };
 
   return (
-    <div className="flex flex-col w-screen h-screen justify-center items-center">
+    <div className="flex flex-col w-screen h-full justify-center items-center">
       <Form {...searchPokemonForm}>
         <form onSubmit={searchPokemonForm.handleSubmit(onSubmit)}>
           <FormField
@@ -131,7 +131,7 @@ export function SearchPokemon() {
       )}
 
       {/* Lista dos Pokemons */}
-      <div className=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-4">
         {pokemonList.map((pokemon) => (
           <div
             key={pokemon.name}
